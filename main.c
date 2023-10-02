@@ -6,6 +6,8 @@
 
 #include <math.h>
 #include <vulkan/vulkan_core.h>
+#include <time.h>
+
 #include "vk_allocator.h"
 #include "vk_common.h"
 #include "vk_defs.h"
@@ -69,7 +71,7 @@ float modelMatrix[16] = {
     +0.0f,+0.0f,+1.0f,+0.0f,
     +0.2f,+0.2f,+0.0f,+1.0f,
 };
-float time = 0.0f;
+float elapsed_time = 0.0f;
 #pragma endregion
 #pragma region [ Memory Testing functions (REMOVE THIS) ]
 void reserve_memory(vkDisplay *d)
@@ -424,11 +426,11 @@ void cleanup(vkDisplay *d)
 }
 
 #define PI 3.14159265359
-void update(vkDisplay *d)
+void update(vkDisplay *d, double delta)
 {
-    time = SDL_GetTicks();
-    modelMatrix[12] = (sin(time / 10.f * PI / 180.f));
-    modelMatrix[13] = (sin(time / 10.f * PI / 180.f));
+    elapsed_time = SDL_GetTicks();
+    modelMatrix[12] = (sin(elapsed_time / 10.f * PI / 180.f));
+    modelMatrix[13] = (sin(elapsed_time / 10.f * PI / 180.f));
 
     update_UBO(
         d->context.device, 
@@ -446,8 +448,11 @@ int main()
 {   
     int err_code = 0,
         exit = 0;
+
     vkDisplay disp;
     SDL_Event e;
+    time_t  current_time;
+    double  delta;
 
     err_code = vk_new_display(800, 600, "test", &disp);
     //reserve_memory(&disp);
@@ -457,6 +462,7 @@ int main()
         
     for (;;)
     {
+        current_time = clock();
         SDL_PollEvent(&e);
         switch (e.type)
         {
@@ -465,11 +471,13 @@ int main()
                 break;
         }
 
-        update(&disp);
+        update(&disp, delta);
         render(&disp);
 
         if (exit != 0)
             break;
+
+        delta = (clock() - current_time) / (float)CLOCKS_PER_SEC;
     }
     cleanup(&disp);
     vk_destroy_display(&disp);
