@@ -84,10 +84,10 @@ typedef struct
                 gfxQueueFamilyIndex,
                 presQueueFamilyIndex;
 
-    // Pipeline
-    VkPipelineLayout    *layouts;
+    // Pipelines
     VkPipeline          *pipelines;
-    uint32_t            size;
+    VkPipelineLayout    *layouts;
+    uint32_t            pipelineCount;
 
     // Viewport and scissor
     VkViewport  viewport;

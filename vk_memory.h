@@ -3,8 +3,8 @@
 #include <stdint.h>
 #include <vulkan/vulkan_core.h>
 
-#include "vk_allocator.h"
 #include "vk_defs.h"
+#include "vk_allocator.h"
 
 #pragma region [ Misc. Utilities ]
 // Utilities

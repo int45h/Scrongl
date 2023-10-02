@@ -52,15 +52,6 @@ ScVkMemoryBlock UBO_memory[2];
 VkDescriptorPool descriptorPool;
 int frameCount = 2;
 
-// UBO data definition
-typedef struct 
-{
-    uint32_t        m_binding,
-                    m_set;
-    ScVkMemoryBlock m_uniforms;
-} 
-ScVkUBO;
-
 VkDescriptorSetLayout   UBO_layout;
 VkDescriptorSet         UBO_set;
 
@@ -302,9 +293,9 @@ void start(vkDisplay *d)
     VkPushConstantRange range = {};
     VkResult result = VK_ERROR_UNKNOWN;
 
-    d->renderState.layouts      = malloc(1*sizeof(VkPipelineLayout));
-    d->renderState.pipelines    = malloc(1*sizeof(VkPipeline));
-    d->renderState.size         = 1;
+    d->renderState.pipelines        = malloc(1*sizeof(VkPipeline));
+    d->renderState.layouts          = malloc(1*sizeof(VkPipelineLayout));
+    d->renderState.pipelineCount    = 1;
 
     // Create push constants and default pipeline
     range.stageFlags    = VK_SHADER_STAGE_FRAGMENT_BIT;
@@ -341,6 +332,7 @@ void start(vkDisplay *d)
         &UBO_layout, 1
     );
     VK_CHECK_VOID(result, "failed to create default graphics pipeline");
+
 
     result = vk_CreateCommandPool(&d->context, &d->renderState, &cmdPool);
     VK_CHECK_VOID(result, "failed to create command pool!");
@@ -411,8 +403,8 @@ void cleanup(vkDisplay *d)
     vkDestroyPipeline(d->context.device, d->renderState.pipelines[0], NULL);
     vkDestroyPipelineLayout(d->context.device, d->renderState.layouts[0], NULL);
 
-    free(d->renderState.layouts);
     free(d->renderState.pipelines);
+    free(d->renderState.layouts);
 
     vkDeviceWaitIdle(d->context.device);
 
@@ -428,9 +420,17 @@ void cleanup(vkDisplay *d)
 #define PI 3.14159265359
 void update(vkDisplay *d, double delta)
 {
-    elapsed_time = SDL_GetTicks();
-    modelMatrix[12] = (sin(elapsed_time / 10.f * PI / 180.f));
-    modelMatrix[13] = (sin(elapsed_time / 10.f * PI / 180.f));
+    elapsed_time += (float)delta;//= SDL_GetTicks();
+    //printf("delta: %f\nelapsed time: %f\n", (float)delta, elapsed_time);
+    /*
+        a b c d
+        e f g h
+        i j k l
+        m n o p
+    */
+    modelMatrix[0]  = 1.f / d->ar;
+    modelMatrix[12] = (sin(elapsed_time * 1000.f * PI / 180.f));
+    modelMatrix[13] = (sin(elapsed_time * 1000.f * PI / 180.f));
 
     update_UBO(
         d->context.device, 
@@ -454,7 +454,7 @@ int main()
     time_t  current_time;
     double  delta;
 
-    err_code = vk_new_display(800, 600, "test", &disp);
+    err_code = vk_new_display(1280, 720, "test", &disp);
     //reserve_memory(&disp);
     //vk_PrintPhysicalDeviceMemoryProperties(disp.renderState.activeDevice);
 
@@ -477,7 +477,7 @@ int main()
         if (exit != 0)
             break;
 
-        delta = (clock() - current_time) / (float)CLOCKS_PER_SEC;
+        delta = (float)(clock() - current_time) / (float)CLOCKS_PER_SEC;
     }
     cleanup(&disp);
     vk_destroy_display(&disp);
